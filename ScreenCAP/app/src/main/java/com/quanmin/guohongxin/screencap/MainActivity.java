@@ -13,10 +13,11 @@ import android.os.Build;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.view.Surface;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
 
 import java.nio.ByteBuffer;
 
@@ -25,13 +26,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String TAG = getClass().getSimpleName();
 
     private Button mBtnCap;
-    private MediaProjectionManager mMediaProjectionManager ;
+    private MediaProjectionManager mMediaProjectionManager;
     private Intent mScreenCaptureIntent;
     private int REQUEST_CODE = 100;
-    private Surface mSurface;
     private VirtualDisplay mVirtualDisplay;
-    private ImageView mIvMain;
-    private Image image;
+    private SurfaceView mSvMain;
+    private int mDensityDpi;
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -39,13 +39,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mMediaProjectionManager = (MediaProjectionManager)getSystemService(MEDIA_PROJECTION_SERVICE);
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        mDensityDpi = metrics.densityDpi;
+
+        mMediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
         mScreenCaptureIntent = mMediaProjectionManager.createScreenCaptureIntent();
 
         mBtnCap = (Button) findViewById(R.id.btn_cap);
         mBtnCap.setOnClickListener(this);
 
-        mIvMain = (ImageView) findViewById(R.id.iv_main);
+        mSvMain = (SurfaceView) findViewById(R.id.sv_main);
     }
 
     @Override
@@ -68,41 +72,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         mVirtualDisplay = mediaProjection.createVirtualDisplay(TAG,
-                500,
-                500,
-                500,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC,
+                mSvMain.getWidth(),
+                mSvMain.getHeight(),
+                mDensityDpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
                 creatSurface(), null, null);
-
-
-        mIvMain.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                int width = image.getWidth();
-                int height = image.getHeight();
-                final Image.Plane[] planes = image.getPlanes();
-                final ByteBuffer buffer = planes[0].getBuffer();
-                //每个像素的间距
-                int pixelStride = planes[0].getPixelStride();
-                //总的间距
-                int rowStride = planes[0].getRowStride();
-                int rowPadding = rowStride - pixelStride * width;
-                Bitmap bitmap = Bitmap.createBitmap(width + rowPadding / pixelStride, height,
-                        Bitmap.Config.ARGB_8888
-                );
-
-                mIvMain.setImageBitmap(bitmap);
-            }
-        }, 2000);
-
     }
 
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     private Surface creatSurface() {
-        ImageReader imageReader = ImageReader.newInstance(500, 500, PixelFormat.RGBA_8888, 1);
-        image = imageReader.acquireLatestImage();
+//        ImageReader imageReader = ImageReader.newInstance(500, 500, PixelFormat.RGBA_8888, 1);
+//        image = imageReader.acquireLatestImage();
+//
+//        mSurface = imageReader.getSurface();
 
-        mSurface = imageReader.getSurface();
-        return mSurface;
+        Surface surface = mSvMain.getHolder().getSurface();
+
+        return surface;
     }
 }
