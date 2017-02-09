@@ -28,4 +28,6 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile(name: 'libfilter', ext: 'aar')
     compile files('libs/librtmp.jar')
+    compile 'com.android.support:design:25.0.1'
+    compile 'com.google.android.gms:play-services-appindexing:8.4.0'
 }
